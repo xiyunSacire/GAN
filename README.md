@@ -12,12 +12,12 @@
 
 | Module               | Version |
 |----------------------|---------|
-|                      |         |
-|                      |         |
-|                      |         |
-|                      |         |
-|                      |         |
-|                      |         |
+|      argparse        |  1.4.0  |
+|      numpy           |  1.26.0 |
+|      torchvision     |  0.19.1 |
+|      torch.nn        |  2.5.1  |
+|      torch           |  2.5.1  |
+|   matplotlib.pyplot  |  3.8.0  |
 
 
 ##  原理讲解
