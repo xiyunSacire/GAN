@@ -1,60 +1,43 @@
 # 生成对抗网络
-## 项目简介：
-- GAN是一种深度学习模型，由生成器（Generator）和判别器（Discriminator）组成。
-- 这两个神经网络（Generator和Discriminator）相互对抗，通过不断调整参数提高自身表现，生成模型尝试生成更逼真的数据，判别模型提高判断数据真实性和生成数据的能力。
-- 通过我们的**Generative Adversarial Nets**你可以生成出一些有趣的**图片**或是**文本**，修复**老旧破损的照片**，或是生成**额外的训练样本**。
 ##  原理讲解 ：
 ### 详细原理:
-![输入图片说明](/imgs/2024-11-13/kSyUtEgaZM5ufr1I.png)
-- 假设要生成某一个游戏的内容图片，用 x 来表示这个要生成的数据。接下来定义一个函数  Pz ，随机获取一个噪音变量 z（可以是一个100维随机向量），最后用生成器 G(z; θg​) 把 z 映射成 x 。
-- 生成器的生成模型是一个**MLP（多层感知器Multilayer Perceptron，即人工神经网络）**，由于MLP理论上可以拟合任何一个函数，因此随机构造出一个差不多大小的向量时，可以使用MLP可以将 z 强行映射成所需要的 x 。简而言之**生成器的功能就是通过随机噪声变量生成一个和真实样本差不多的图片**。
--  接着，判别器 D(x; θd​)，其中为 θd​ 可学习参数，判别器的作用只有一个，那就是**对数据进行真假判断（数据包括真实的数据和生成的数据）**，如果是真实的数据 x 就输出 1 ，如果是生成器的数据就输出 0。
-![输入图片说明](/imgs/2024-11-13/Cy7pT5t7OS1xa1Bx.png)
-- 如果D完美，这两项都等于 0 ，如果G完美，则这两项都会是一个负数。D 和 G 相互对抗，D 要使这个函数更大，而 G 要使这个函数更小，如果达到了一个**纳什均衡**，使 D 和 G 无法再进步，那么这个函数的收益达到最大。这个时候生成模型能够把来自一个均匀分布的随机噪音 z 映射成几乎跟真实数据一样的**高斯分布**（正态分布），这个就是GAN的算法。
--  **其实这个过程就相当于一个鉴定师和一个作假者的博弈，鉴定师需要尽可能的识别假画，而作假者需要尽可能的骗过鉴定师，当鉴定师无法识破作假者的假画时，那么这个假画就达到以假乱真的结果。**
+- GAN是一种深度学习模型，最早由Ian Goodfellow及其同事在2014年提出。由生成器（Generator）和判别器（Discriminator）组成。这两个神经网络相互对抗，通过不断调整参数提高自身表现，生成模型尝试生成更逼真的数据，判别模型提高判断数据真实性和生成数据的能力。
+- 论文链接：https://arxiv.org/pdf/1406.2661
+  
+<img width="793" alt="1" src="https://github.com/user-attachments/assets/82eea26b-4666-49e9-a858-3d269845474c">
+
+- GAN结构如上图所示，由一个生成器和判别器构成，将一个随机噪声（随机矩阵）输入给生成器，它将输出一些生成的图片，这些图片会和一些真实的样本数据一起输入给判别器，由判别器判断这些图片的真假，最后返回给生成器一些数据来更新生成器，以此生成更加真实的图片。
 ### 注意事项：
 - **判别器和生成器的更新速度需要差不多**：如果生成器更新速度过快导致判别器无法判断真伪。同样的如果判别器更新速度过快会导致生成器还没有进步就全部被识别出来。所以需要**生成器和判别器的更新速度差不多才能更好的使得它们不断迭代之后收敛**。
 # Discriminator：
-![输入图片说明](/imgs/2024-11-13/iPpHi2vjyCd0DEMp.png)
+<img width="360" alt="2" src="https://github.com/user-attachments/assets/ec696248-8035-41c6-bee8-5f39fdf50831">
+
 # Generator：
-![输入图片说明](/imgs/2024-11-13/G9Jk94Eq44DeoYdQ.png)
+<img width="233" alt="3" src="https://github.com/user-attachments/assets/4863ceef-7a75-4c35-a0a8-d8f0f466bb33">
+
 ## 对于生成器的问题：
 早期的时候 G 比较弱，D可以很容易把 G 和 真实数据分开，其中log(1 − D(G(z)))会变成零，导致生成器无法进行迭代。这个问题有许多解决办法，在本次实践内容中**通过交替训练生成器和判别器，并采用适当的损失函数和优化策略，来逐步提升生成器生成逼真图片的能力，同时保持判别器的区分能力**，解决早期生成器较弱的问题。
-## 详细内容:
-### 算法的具体实现：我们首先考虑对于给定生成器 G 的最优判别器 D。
--  **命题 1**：对于固定的 G，最优判别器 D 为：![输入图片说明](/imgs/2024-11-13/qVDpHQ7ytCnsxax1.png)
--  
-- **证明**：给定任何生成器 G，判别器 D 的训练标准是最大化数量 V(G,D) ：![输入图片说明](/imgs/2024-11-13/RkfqaWdFhqHKPx7W.png)
-- 
-可以重写为：![输入图片说明](/imgs/2024-11-13/XxhKGgnUsLYfatNz.png)
 
- 对于任何(a,b)属于R²  \{0,0}，函数 y→a log(y) + b log(1-y)在区间 [0,1]上的最大值为 a/(a+b).    
- **判别器不需要在 Supp(Pdata)并Supp(Pg)之外定义**，从而完成证明。
-- **注意**，判别器 D 的训练目标可以解释为最大化条件概率 ![输入图片说明](/imgs/2024-11-13/kF15qTT9HemQracb.png)的对数似然估计，其中 Y 表示 x 是否来自![输入图片说明](/imgs/2024-11-13/LO7MwqjXCQsZFRpA.png)或来自![输入图片说明](/imgs/2024-11-13/dNW9T0kxKXPYCxvd.png)
- 在公式 (1) 中的最小最大博弈可以重新表述为：
-![输入图片说明](/imgs/2024-11-13/SkeJ4iWrv000isjp.png)
-**定理 1**：虚拟训练标准 C(G) 的全局最小值当且仅当![输入图片说明](/imgs/2024-11-13/8i3uxJxqhKM3vah4.png)  时实现。此时， C(G) 达到值 −log4 。
-  
-**证明**：对于   ![输入图片说明](/imgs/2024-11-13/QfUMjFfC8HA9AYus.png) ，有 ![输入图片说明](/imgs/2024-11-13/W6uy3hCRsDWc8buH.png) （参见公式 (2)）。
-
-  因此，通过检查公式 (4) 中 ![输入图片说明](/imgs/2024-11-13/fHB3G6tYBXOMHgeL.png)要看到这是 C(G) 的最佳值，只在![输入图片说明](/imgs/2024-11-13/MYMKcFlTQjyCnGsm.png) 时实现，
-  注意到：![输入图片说明](/imgs/2024-11-13/r7mU7iP89joeunXP.png)并且通过从 C(G)=  ![输入图片说明](/imgs/2024-11-13/8Byk5Cu8k1lmQ6sJ.png)     中减去这个表达式，
-  我们得到：![输入图片说明](/imgs/2024-11-13/DtVEa1AXUMHWZoin.png)其中 KLKL 是 Kullback-Leibler 散度。
-  我们在之前的表达式中识别出模型的分布与数据生成过程之间的 Jensen-Shannon 散度：![输入图片说明](/imgs/2024-11-13/ypsnexKN0jBLJP5x.png)
-由于两个分布之间的 Jensen-Shannon 散度总是非负的，并且仅在它们相等时为零，因此我们证明了  ![输入图片说明](/imgs/2024-11-13/HFNZwfzXGQhK20F2.png)   是 C(G) 的全局最小值，而唯一的解是   ![输入图片说明](/imgs/2024-11-13/v9sS4tbMD3AqC71A.png)    ，即生成模型完美复制数据生成过程。
 # 项目实践
 ## 第一步：引用pytorch库和各项参数定义
-![输入图片说明](/imgs/2024-11-13/8DlBuxoSrGhXRTyV.png)
+<img width="400" alt="4" src="https://github.com/user-attachments/assets/fe5c5939-f3d7-4abc-a0fc-b31369cd561d">
+<img width="700" height="400" alt="5" src="https://github.com/user-attachments/assets/a03e9d25-f877-4c69-93c5-203506e59e79">
+
 ## 第二步：实现损失函数
-![输入图片说明](/imgs/2024-11-13/SovXLw5VzE7WDi6P.png)
+
 ### 损失函数的实现：使用 pyTorch 中的 BCELoss 函数
-![输入图片说明](/imgs/2024-11-13/GYcNilwjf1sXD11N.png)
+<img width="375" alt="6" src="https://github.com/user-attachments/assets/01ea1a71-c52e-4c10-8354-5cc1b69f9e8a">
+
+
 ### BCELoss：
-![输入图片说明](/imgs/2024-11-13/cxpHiGDcIdZr4Md0.png)
+<img width="681" alt="7" src="https://github.com/user-attachments/assets/ebcd6a08-e6bb-4bd6-8f52-bba168c18b46">
+
 ## 第三步：实现生成器和判别器的定义
-![输入图片说明](/imgs/2024-11-13/V2XwfRAl2gIZZdsf.png)
+<img width="469" alt="8" src="https://github.com/user-attachments/assets/e560dad6-1c9b-4ab9-9177-a4d553f7a9c2">
+<img width="437" alt="9" src="https://github.com/user-attachments/assets/20fdecbb-b345-430d-bfa9-1460b452d398">
+
 ## 第四步：下载实验数据。
-![输入图片说明](/imgs/2024-11-13/bekUIIiug6Rn0tuU.png)
+<img width="600" alt="10" src="https://github.com/user-attachments/assets/ea47f3be-3f2a-4f3b-8f00-5dc967dcdfbe">
 
 ```python
 
@@ -426,7 +409,7 @@ Variable 方法将 PyTorch 张量封装为一个变量，使其可以进行自�
 ### 生成的噪声 z 被用作生成器的输入，生成器随后会尝试生成与真实数据相似的假图像。这个过程是 GAN 训练的核心，生成器不断学习如何生成更真实的图像
 
 ## 三、判别器原理：
-![输入图片说明](/imgs/2024-11-13/N5JbPImXJWqEht5Z.png)
+<img width="431" alt="图片1" src="https://github.com/user-attachments/assets/c18fd4c4-0577-432e-86c0-18cfefbc11ad">
 
 - **判别器是一个神经网络模型，它的任务是评估输入图像的真实性，判断其是来自真实数据还是生成器产生的样本。**
      **判别器的网络结构由一系列全连接层组成**，这些层被组织在 nn.Sequential 容器中，以确保数据能够顺利地流经每一层。
@@ -435,8 +418,6 @@ Variable 方法将 PyTorch 张量封装为一个变量，使其可以进行自�
      **当判别器接收到一张图像作为输入时，它通过这个网络结构进行前向传播，最终输出一个代表该图像真实性的概率值**。这个概率值可以用于训练生成器和判别器，使得生成对抗网络的训练更为有效。
       **一句话概括，判别器的工作就是接收真实图像和生成器图像作为输入，并通过神经网络判断该图像是否真实**。
 ## 功能实现部分：
-#### 判别器实例
-![输入图片说明](/imgs/2024-11-13/Nn2TDNkzOYOiOQoq.png)
 #### 使用优化器
 
 - 其中 torch.optim.Adam 是 PyTorch 库中定义的 Adam 优化器的类，用于优化判别器的参数。.parameters() 方法为优化器提供了一个迭代器，该迭代器包含了判别器模型中所有需要更新的参数（即权重和偏置）。
@@ -445,41 +426,41 @@ Variable 方法将 PyTorch 张量封装为一个变量，使其可以进行自�
 - **判别器使用优化器的作用是通过更新其参数来提高对真实和生成样本的辨别能力，从而准确地区分真实数据和生成数据。优化器确保判别器在训练中不断调整以适应生成器的变化，从而增强其分类性能。**
 ## 四、训练过程
 - 首先，**这两个循环构成了训练 GAN 的基本迭代过程**。外层循环中 n_epochs 是一个通过命令行参数传入的变量，**表示训练过程中的总轮数（Epochs）**，即整个数据集将被遍历多少次。
-![输入图片说明](/imgs/2024-11-13/rDmnpllx4U1kQ8Wr.png)![输入图片说明](/imgs/2024-11-13/IV8Ny4Rp9QAqmjfO.png)
+<img width="842" alt="11" src="https://github.com/user-attachments/assets/fb3f7734-becd-4f21-8847-e928e01540fb">
+<img width="657" alt="12" src="https://github.com/user-attachments/assets/5ff61b35-7fdd-4337-9a09-12958d557f8b">
 
-![输入图片说明](/imgs/2024-11-13/0Dpqcx3ccheyqo3f.png)
-### MNIST 数据集大概有60,000个样本,那么在每个Epoch中，将会有：
-![输入图片说明](/imgs/2024-11-13/ngxf0x9iuUoguOSp.png)
+### MNIST 
+数据集大概有60,000个样本,那么在每个Epoch中，将会有：
+<img width="261" alt="13" src="https://github.com/user-attachments/assets/c0c57bdf-a0c1-4a4a-a0b2-dc7bca1657d8">
+
 - 内层循环中，dataloader 是一个**数据加载器**，用于按批次加载训练数据。它可以**从数据集中提取样本并进行批处理**。imgs 代表当前批次的图像数据，每个批次包含 opt.batch_size 个图像。**这个循环表示每轮中进行多少个批次，迭代次数等于批次数量**。具体计算方法在上方。
 - 这个循环确保了模型可以**逐批次地处理数据**，而不是一次性处理整个数据集，这对于**内存管理和梯度更新的稳定性都是有益的**。
 **Valid 是真实样本的标签，将全部样本标记为 1** ：
 imgs.size(0)获取当前批次的图像数量（即样本数量）。Tensor(imgs.size(0), 1)创建一个大小为 (batch_size, 1) 的张量。**fill_(1.0)将该张量中的所有元素填充为 1.0，表示真实样本的标签**。
 Variable(..., requires_grad=False)将张量包装成一个变量，并设置 requires_grad=False，表示不需要计算该变量的梯度，因为真实标签在反向传播中不需要更新。
-![输入图片说明](/imgs/2024-11-13/uJpcCnE43ilNM5HG.png)
 **Fake 是生成样本的标签，将全部样本标记为 0** ：
 同样的逻辑，fill_(0.0)将该张量中的所有元素填充为 0.0，表示生成的假样本的标签。
 通过 Variable 进行包装，requires_grad=False 表示该变量不需要计算梯度。
 **这两者在训练过程中将用于计算损失，帮助判别器（Discriminator）学习区分真实样本和生成的样本**。
 real_imgs = Variable(imgs.type(Tensor))  这段是将作为输入的**真实样本**转化为Tensor张量
 ### 生成器训练过程：
-![输入图片说明](/imgs/2024-11-13/OtSmOHllEfPQWONW.png)
-![输入图片说明](/imgs/2024-11-13/0PwFJvmPiIRE7fZy.png)
-![输入图片说明](/imgs/2024-11-13/R7Z3j7eOGyPgWyxx.png)
-![输入图片说明](/imgs/2024-11-13/9TPb3oItFrOgj2Lo.png)
+<img width="655" alt="14" src="https://github.com/user-attachments/assets/1526d63d-f055-4f04-8272-6e7d5bd5df21">
 
 首先，每个批次开始之前使用optimizer_G.zero_grad()清零生成器的梯度，以避免梯度累积导致梯度爆炸。
      接着，**创建 z 噪声张量作为生成器的输入**，使用生成器生产一批图像gen_imgs 
      然后，**使用BCE损失函数来计算生成器的损失**，第一个参数是判别器对生成器生成图像的输出（0~1的概率值），第二个参数是真实样本的标签（所有值是1的张量），**这里的g_loss越小，则生成器功能性实现的越好**。
-![输入图片说明](/imgs/2024-11-13/UmXJnyuFX1tQUmSU.png)
 生成器希望判别器将生成的图像误判为真实图像，**因此这里的 valid 张量填充的是 1** ，函数图像如图所示。
+
+<img width="435" alt="44" src="https://github.com/user-attachments/assets/77a5dadd-9d60-416a-ad2d-a308438e12bf">
+
      当判别器的预测值 y^​ 接近 1 时，**表示判别器认为输入图片是真实的**，此时生成器的损失 L 较小，说明生成器生成的图片成功“欺骗”了判别器，这是我们希望看到的结果。
      当判别器的预测值 y^​ 接近 0 时，**表示判别器认为输入图片是假的**，此时生成器的损失 L 会非常大，这表明生成器生成的图片不够逼真，判别器能够轻易识别出它们是假的。
      **所以生成器在训练过程中的目标就是让这里的g_loss越小越好**。
-     ![输入图片说明](/imgs/2024-11-13/vSuAEIz8seGd7uwG.png)
      最后两步分别是利用之前定义的方法 backward ，计算生成器的梯度，以便在优化步骤中更新生成器的参数。
      使用计算得到的梯度，**调用优化器 optimizer_G 更新生成器的权重，以降低损失**。
 ### 判别器训练过程：
-![输入图片说明](/imgs/2024-11-13/4pXX2XzqSyAeGu0N.png)
+<img width="929" alt="图片6" src="https://github.com/user-attachments/assets/aabae8d3-5dd9-49c9-9e2b-432dfb93d963">
+
 同样的，训练判别器前先清空其梯度，然后**计算判别器在判别真实图像时的损失 real_loss** ，这个损失同样使用BCE损失函数得到。**接着计算判别器在判别生成图像时的损失 fake_loss** 。**最后判别器的损失函数是取两个损失函数的平均值，这样是因为判别器需要同时学习区分真实图像和生成图像**。通过取平均值，可以**确保判别器在两个任务上都得到平衡的训练，避免过分偏向于其中一个任务**。在训练的早期阶段，生成器可能生成质量较差的图像，这时如果只考虑 fake_loss，判别器可能会过于容易地识别出假图像，导致训练不稳定。通过结合 real_loss，可以让判别器在区分真实图像上也保持一定的压力，从而**提高训练的稳定性**。
 <!--stackedit_data:
 eyJoaXN0b3J5IjpbLTc1NTQwMjAwMywtMTA4MDU5MzU2OSwtMT
