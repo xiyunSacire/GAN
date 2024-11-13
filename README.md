@@ -22,11 +22,7 @@
 
 ##  原理讲解
 
-
-
-
-
-
+具体内容：[xiyunSacire-patch-1 分支的 README](https://github.com/xiyunSacire/Generative-Model/blob/xiyunSacire-patch-1/README.md) 来了解更多信息。
 
 
 ## 免责声明
